@@ -63,7 +63,7 @@ bool ConnectDatabase()
     mysql_init(&mysql);  //连接mysql，数据库
 
     //返回false则连接失败，返回true则连接成功
-    if (mysql_real_connect(&mysql,"localhost", "cbaas", "cbaas", "cbaas",0,nullptr,0)) //中间分别是主机，用户名，密码，数据库名，端口号（可以写默认0或者3306等），可以先写成参数再传进去
+    if (mysql_real_connect(&mysql,"localhost", "root", "root", "test",0,nullptr,0)) //中间分别是主机，用户名，密码，数据库名，端口号（可以写默认0或者3306等），可以先写成参数再传进去
     {
         std::cout << "Connected...\n";
         return true;
@@ -83,7 +83,7 @@ void FreeConnect()
 //其实所有的数据库操作都是先写个sql语句，然后用mysql_query(&mysql,query)来完成，包括创建数据库或表，增删改查
 bool QueryDatabase1()
 {
-    query="select f.fund_name,f.inception_date,f.id,f.stage_key,f.prime_broker from fund f where f.valid=1 and f.asset_class=10 limit 12"; //执行查询语句，这里是查询所有，user是表名，不用加引号，用strcpy也可以
+    query="select * from user f limit 12"; //执行查询语句，这里是查询所有，user是表名，不用加引号，用strcpy也可以
     mysql_query(&mysql,"set names gbk"); //设置编码格式（SET NAMES GBK也行），否则cmd下中文乱码
     //返回0 查询成功，返回1查询失败
     if(mysql_query(&mysql, query.c_str()))        //执行SQL语句
