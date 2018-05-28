@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <cmath>
 #include <cstring>
@@ -9,6 +8,9 @@
 #include "winsock.h"
 #include "windows.h"
 #include "mysql.h"
+#include "Sub.h"
+#include <functional>
+
 template <int i=44>
 class fibo{
     static long long fib(int a)  {
@@ -27,10 +29,13 @@ public:
 
 };
 
+constexpr int f(){
+    return 2;
+}
 
 MYSQL mysql; //mysql连接
 MYSQL_FIELD *fd;  //字段列数组
-char field[32][32];  //存字段名二维数组
+std::vector<std::string> field;  //存字段名二维数组
 MYSQL_RES *res; //这个结构代表返回行的一个查询结果集
 MYSQL_ROW column; //一个行数据的类型安全(type-safe)的表示，表示数据行的列
 std::string query; //查询语句
@@ -42,7 +47,42 @@ bool QueryDatabase2();  //查询2
 bool InsertData();
 bool ModifyData();
 bool DeleteData();
+
+std::ostream& operator<<(std::ostream& os,std::function<void(std::ostream&)>func){
+    func(os);
+    return os;
+}
+
+#include <memory>
+#include <algorithm>
+
+
+std::string upperAll(const std::string& source){
+    if(source.length()>0){
+        std::string target;
+        for (char ch:source) {
+            target += std::toupper(ch);
+        }
+        return target;
+    }else{
+        return source;
+    }
+}
+std::string& upperInitCase( std::string& source){
+    if(source.length()>0 ){
+        source.at(0)=std::toupper(source.at(0));
+    }
+    return source;
+}
+
 int main() {
+    std::string s1{"findById"};
+    std::cout << upperInitCase(s1)<< std::endl;
+
+    Sub sub;
+    sub.doit();
+}
+int main4() {
     ConnectDatabase();
     QueryDatabase1();
     InsertData();
@@ -63,7 +103,7 @@ bool ConnectDatabase()
     mysql_init(&mysql);  //连接mysql，数据库
 
     //返回false则连接失败，返回true则连接成功
-    if (mysql_real_connect(&mysql,"localhost", "root", "root", "test",0,nullptr,0)) //中间分别是主机，用户名，密码，数据库名，端口号（可以写默认0或者3306等），可以先写成参数再传进去
+    if (mysql_real_connect(&mysql,"localhost", "cbaas", "cbaas", "cbaas",0,nullptr,0)) //中间分别是主机，用户名，密码，数据库名，端口号（可以写默认0或者3306等），可以先写成参数再传进去
     {
         std::cout << "Connected...\n";
         return true;
@@ -83,7 +123,7 @@ void FreeConnect()
 //其实所有的数据库操作都是先写个sql语句，然后用mysql_query(&mysql,query)来完成，包括创建数据库或表，增删改查
 bool QueryDatabase1()
 {
-    query="select * from user f limit 12"; //执行查询语句，这里是查询所有，user是表名，不用加引号，用strcpy也可以
+    query="select f.fund_name,f.inception_date,f.id,f.stage_key,f.prime_broker from fund f where f.valid=1 and f.asset_class=10 limit 12"; //执行查询语句，这里是查询所有，user是表名，不用加引号，用strcpy也可以
     mysql_query(&mysql,"set names gbk"); //设置编码格式（SET NAMES GBK也行），否则cmd下中文乱码
     //返回0 查询成功，返回1查询失败
     if(mysql_query(&mysql, query.c_str()))        //执行SQL语句
@@ -143,17 +183,19 @@ bool QueryDatabase2()
     //打印数据行数
     std::cout << "number of dataline returned:"<< mysql_affected_rows(&mysql);
     for(int i=0;fd=mysql_fetch_field(res);i++)  //获取字段名
-        strcpy(field[i],fd->name);
+        field.emplace_back(fd->name);
     int j=mysql_num_fields(res);  // 获取列数
-    for(int i=0;i<j;i++)  //打印字段
-        std::cout << field[i]  << "\t";
+    for(std::string fie:field)  //打印字段
+        std::cout << fie << "\t";
      std::cout << std::endl;
+
     while(column=mysql_fetch_row(res))
     {
-        for(int i=0;i<j;i++)
-            std::cout << column[i]<<"\t";
+        for(int i=0;i<j;i++) {
+            const char* col3 = column[i];
+            std::cout << col3 <<"\t";
+        }
         std::cout << std::endl;
-
     }
     return true;
 }
@@ -176,13 +218,10 @@ bool InsertData()
 bool ModifyData()
 {
     query="update user set email='lilei325@163.com' where name='Lilei'";
-    if(mysql_query(&mysql, query.c_str()))        //执行SQL语句
-    {
+    if(mysql_query(&mysql, query.c_str())){
         std::cout << "Query failed :"<<mysql_error(&mysql) << std::endl;
         return false;
-    }
-    else
-    {
+    }else{
         std::cout <<"Insert success\n";
         return true;
     }
@@ -226,10 +265,12 @@ int main2() {
     fibo<> f;
 }
 
-template<typename T=Example,int b=23>
+template<typename T=Example>
 void polymophis(const T& ob=Example{}) {
     ob.someFunc();
 }
+
+
 template <typename T=Example,int t=989>
 class Dumping{
     T inst;
@@ -246,6 +287,7 @@ int main3() {
 int main1() {
     Wrapper wrapper;
     wrapper.getWeight(Wrapper::ac::AIE);
+    wrapper.getWeight(Wrapper::ac::BIE);
 //     std::cout << AbstractBase::a1 << std::endl;
     std::cout << sizeof(Wrapper::ac::CIE) << std::endl;
     std::cout << Season::SPRING.getString() << std::endl;
